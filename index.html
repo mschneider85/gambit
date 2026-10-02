@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#120d09">
+  <meta name="description" content="Schach im Fantasy-Gewand: gegen den Computer (400–3000 ELO), zu zweit online oder im Training Stufe für Stufe.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <!-- Homescreen-Icon für iPhone (180) und iPad (167 Pro, 152); iOS rundet die Ecken selbst ab -->
+  <link rel="apple-touch-icon" href="art/icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="art/icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="art/icons/apple-touch-icon-167.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="art/icons/apple-touch-icon-152.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gambit">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Gambit – Schach</title>
+  <link rel="icon" href="art/icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="art/icons/favicon-32.png" sizes="32x32" type="image/png">
+  <!-- Alle Schriften liegen im Projekt (@font-face in style.css), es wird nichts von fremden Servern geladen -->
+  <link rel="preload" href="art/fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="art/fonts/alegreya-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=35">
+  <!-- Inhalt erst zeigen, wenn Cinzel/Alegreya geladen sind (kein kurzes Aufblitzen der Ersatzschrift) -->
+  <style>html.fonts-loading body > * { visibility: hidden; }</style>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      if (!document.fonts || !document.fonts.load) return;
+      root.classList.add('fonts-loading');
+      var done = function () { root.classList.remove('fonts-loading'); };
+      Promise.all(['600 1em Cinzel', '800 1em Cinzel', '500 1em Alegreya', '700 1em Alegreya'].map(function (f) {
+        return document.fonts.load(f);
+      })).then(done, done);
+      setTimeout(done, 2000);
+    })();
+  </script>
+</head>
+<body>
+  <!-- ============================================================ Hauptmenü -->
+  <section id="menu" class="screen">
+    <div class="menu-bg" aria-hidden="true"></div>
+    <div class="menu-top">
+      <button class="rank-chip" id="menu-rank" aria-label="Dein Rang und Fortschritt"></button>
+      <div class="menu-tools">
+        <button class="icon-btn sfx-toggle" aria-label="Soundeffekte an/aus" title="Soundeffekte">🔊</button>
+        <button class="icon-btn music-toggle" aria-label="Musik an/aus" title="Musik">🎵</button>
+        <button class="icon-btn" id="btn-settings" aria-label="Einstellungen" title="Einstellungen">⚙️</button>
+      </div>
+    </div>
+    <div class="menu-main">
+      <div class="crest" aria-hidden="true"><img src="art/icons/icon.svg" alt=""></div>
+      <h1 class="title">Gambit</h1>
+      <p class="subtitle">Das Spiel der Könige</p>
+      <button class="resume-btn" id="btn-resume" hidden></button>
+      <div class="modes">
+        <button class="mode-tile" data-mode="pvc">
+          <span class="mode-icon">🐉</span>
+          <span class="mode-text"><b>Gegen den Computer</b><small>Wähle die Stärke – vom Lehrling bis zum Drachen</small></span>
+        </button>
+        <button class="mode-tile" data-mode="online">
+          <span class="mode-icon">⚔️</span>
+          <span class="mode-text"><b>Zu zweit online</b><small>Per Link, QR-Code oder Raumcode</small></span>
+        </button>
+        <button class="mode-tile" data-mode="training">
+          <span class="mode-icon">📜</span>
+          <span class="mode-text"><b>Training</b><small>Lektionen, Rätsel und Endspiele – Stufe für Stufe</small></span>
+        </button>
+      </div>
+      <div class="menu-links">
+        <button class="link-btn" id="btn-achievements">🏆 Erfolge</button>
+        <button class="link-btn" id="btn-local">♟️ Zu zweit an einem Gerät</button>
+        <button class="link-btn" id="btn-about">ℹ️ Über</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ Partie -->
+  <section id="game" class="screen" hidden>
+    <header class="topbar">
+      <button class="icon-btn" id="game-back" aria-label="Zurück zum Menü" title="Menü">←</button>
+      <div class="topbar-title"><b id="game-title"></b><small id="game-sub"></small></div>
+      <button class="icon-btn" id="game-flip" aria-label="Brett drehen" title="Brett drehen (F)">⟲</button>
+      <button class="icon-btn sfx-toggle" aria-label="Soundeffekte an/aus" title="Soundeffekte">🔊</button>
+    </header>
+    <div class="game-layout">
+      <div class="board-area">
+        <div class="board-stack">
+          <div class="player-bar" id="bar-top"></div>
+          <div class="board-frame"><div id="board"></div></div>
+          <div class="player-bar" id="bar-bottom"></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="coach" id="coach" hidden></div>
+        <div class="eval" id="eval" hidden><div class="eval-fill"></div><span class="eval-text"></span></div>
+        <div class="moves" id="moves" aria-label="Zugliste"></div>
+        <div class="nav" id="nav">
+          <button class="icon-btn" data-nav="start" aria-label="Zum Anfang">«</button>
+          <button class="icon-btn" data-nav="prev" aria-label="Zug zurück">‹</button>
+          <button class="icon-btn" data-nav="next" aria-label="Zug vor">›</button>
+          <button class="icon-btn" data-nav="end" aria-label="Zur aktuellen Stellung">»</button>
+        </div>
+        <div class="actions" id="actions"></div>
+        <div class="emotes" id="emotes" hidden></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================================================ Training -->
+  <section id="training" class="screen" hidden>
+    <header class="topbar">
+      <button class="icon-btn" id="training-back" aria-label="Zurück zum Menü" title="Menü">←</button>
+      <div class="topbar-title"><b>Training</b><small>Der Weg zum Drachenkönig</small></div>
+      <button class="icon-btn" id="training-achievements" aria-label="Erfolge" title="Erfolge">🏆</button>
+    </header>
+    <div class="training-scroll">
+      <div class="rank-card" id="rank-card"></div>
+      <div class="campaign" id="campaign"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ Online-Lobby -->
+  <section id="lobby" class="screen" hidden>
+    <header class="topbar">
+      <button class="icon-btn" id="lobby-back" aria-label="Zurück zum Menü" title="Menü">←</button>
+      <div class="topbar-title"><b>Zu zweit online</b><small>Direkt von Gerät zu Gerät</small></div>
+      <span class="icon-btn-spacer"></span>
+    </header>
+    <div class="lobby-scroll"><div class="panel lobby" id="lobby-body"></div></div>
+  </section>
+
+  <div id="overlays"></div>
+  <div id="toasts" aria-live="polite"></div>
+
+  <script src="js/vendor/chess.js?v=35"></script>
+  <script src="js/game.js?v=35"></script>
+  <script src="js/engine.js?v=35"></script>
+  <script src="js/strength.js?v=35"></script>
+  <script src="js/board.js?v=35"></script>
+  <script src="js/audio.js?v=35"></script>
+  <script src="js/net.js?v=35"></script>
+  <script src="js/pvp.js?v=35"></script>
+  <script src="js/progress.js?v=35"></script>
+  <script src="js/achievements.js?v=35"></script>
+  <script src="js/training/puzzles.js?v=35"></script>
+  <script src="js/training/campaign.js?v=35"></script>
+  <script src="js/training/runner.js?v=35"></script>
+  <script src="js/ui/common.js?v=35"></script>
+  <script src="js/ui/play.js?v=35"></script>
+  <script src="js/ui/pvc.js?v=35"></script>
+  <script src="js/ui/lobby.js?v=35"></script>
+  <script src="js/ui/training.js?v=35"></script>
+  <script src="js/ui/menu.js?v=35"></script>
+  <script>
+    // Service Worker: offline spielen und schneller Start. Auf localhost nur mit ?sw (sonst stören alte Dateien beim Entwickeln)
+    (function () {
+      if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+      var local = /^(localhost|127\.|\[::1\])/.test(location.hostname);
+      if (local && !/[?&]sw\b/.test(location.search)) return;
+      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js?v=35').catch(function () {}); });
+    })();
+  </script>
+</body>
+</html>
