@@ -13,15 +13,16 @@
   const RANKS = [
     { xp: 0, name: 'Bauer', icon: '♟️' },
     { xp: 300, name: 'Knappe', icon: '🛡️' },
-    { xp: 900, name: 'Ritter', icon: '⚔️' },
-    { xp: 2000, name: 'Burgherr', icon: '🏰' },
-    { xp: 3800, name: 'Magier', icon: '🔮' },
-    { xp: 6500, name: 'Großmeister', icon: '👑' },
-    { xp: 10000, name: 'Drachenkönig', icon: '🐉' },
+    { xp: 1000, name: 'Ritter', icon: '⚔️' },
+    { xp: 2500, name: 'Burgherr', icon: '🏰' },
+    { xp: 4500, name: 'Magier', icon: '🔮' },
+    { xp: 7000, name: 'Großmeister', icon: '👑' },
+    { xp: 12000, name: 'Drachenkönig', icon: '🐉' },
   ];
 
   const XP = {
-    levelBase: 40, perStar: 20, // erstes Abschließen: 40 + 20 je Stern; mehr Sterne später: 20 je neuem Stern
+    levelBase: 20, perStar: 10, // erstes Abschließen: 20 + 10 je Stern; mehr Sterne später: 10 je neuem Stern – jeweils × chapterFactor
+    chapterFactor: (ci) => 1 + 0.3 * ci, // spätere Kapitel sind schwerer und zählen mehr (Kapitel 1: ×1, Kapitel 10: ×3,7)
     win: (elo) => Math.round(Math.max(20, elo / 10)), draw: (elo) => Math.round(Math.max(10, elo / 25)), loss: 8,
     onlineWin: 100, onlineDraw: 50, onlineLoss: 20,
   };
@@ -97,14 +98,15 @@
     stars(id) { return (this.s.levels[id] && this.s.levels[id].stars) || 0; }
     done(id) { return !!this.s.levels[id] && this.s.levels[id].stars > 0; }
 
-    /** Level abgeschlossen (stars 1–3; 0 = nicht geschafft, zählt nur den Versuch). → { first, gained, xp } */
-    levelResult(id, stars) {
+    /** Level abgeschlossen (stars 1–3; 0 = nicht geschafft, zählt nur den Versuch). → { first, gained, xp }
+     *  factor: XP-Multiplikator des Kapitels (XP.chapterFactor). */
+    levelResult(id, stars, factor = 1) {
       const old = this.s.levels[id] || { stars: 0, tries: 0 };
       const rec = { ...old, tries: (old.tries || 0) + 1 };
       let xp = 0;
       const first = stars > 0 && !old.stars;
       if (stars > old.stars) {
-        xp = first ? XP.levelBase + XP.perStar * stars : XP.perStar * (stars - old.stars);
+        xp = Math.round(factor * (first ? XP.levelBase + XP.perStar * stars : XP.perStar * (stars - old.stars)));
         rec.stars = stars;
         rec.at = Date.now();
       }

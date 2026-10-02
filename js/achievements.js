@@ -148,8 +148,9 @@
   function list() {
     if (cache) return cache;
     const chapters = (CG.Campaign && CG.Campaign.chapters) || [];
-    const perChapter = chapters.map((c) => ({
-      id: `chapter-${c.id}`, icon: c.icon, name: c.badge || c.title, desc: `Schließe das Kapitel „${c.title}“ ab.`, xp: 80,
+    const factor = (CG.progressUtil && CG.progressUtil.XP.chapterFactor) || (() => 1);
+    const perChapter = chapters.map((c, ci) => ({
+      id: `chapter-${c.id}`, icon: c.icon, name: c.badge || c.title, desc: `Schließe das Kapitel „${c.title}“ ab.`, xp: Math.round(80 * factor(ci)),
       check: (e) => e.type === 'level' && e.chapter === c.id && e.chapterDone,
     }));
     const at = BASE.findIndex((a) => a.id === 'campaign-stars') + 1; // nach den Trainings-Erfolgen

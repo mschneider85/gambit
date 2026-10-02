@@ -50,12 +50,33 @@ expect('Rätselserie', Array.from({ length: 10 }, () => ({ type: 'puzzle', ok: t
   const before = p.state.xp;
   const r = p.levelResult('figuren/turm', 2);
   const r2 = p.levelResult('figuren/turm', 3);
-  if (r.xp !== 80 || r2.xp !== 20 || p.stars('figuren/turm') !== 3) { errors++; console.log('✗ Level-XP', r, r2); } else console.log('✓ Level-XP und Sterne');
+  if (r.xp !== 40 || r2.xp !== 10 || p.stars('figuren/turm') !== 3) { errors++; console.log('✗ Level-XP', r, r2); } else console.log('✓ Level-XP und Sterne');
   void before;
+  const late = p.levelResult('meister/x', 3, CG.progressUtil.XP.chapterFactor(9));
+  if (late.xp !== 185) { errors++; console.log('✗ Level-XP mit Kapitelfaktor', late); } else console.log('✓ Level-XP mit Kapitelfaktor');
   const code = p.exportCode();
   const q = new CG.Progress(mem());
   q.importCode(code);
   if (q.stars('figuren/turm') !== 3) { errors++; console.log('✗ Export/Import'); } else console.log('✓ Export/Import');
+}
+// Rangkurve: Kampagne mit drei Sternen (Level-, Kapitel- und Trainingserfolge) – jeder Rang passt zum Inhalt
+{
+  const p = new CG.Progress(mem());
+  const C = CG.Campaign;
+  const rankAfter = {};
+  C.chapters.forEach((c, ci) => {
+    for (const l of c.levels) {
+      const res = p.levelResult(l.key, 3, CG.progressUtil.XP.chapterFactor(ci));
+      p.addXp(res.xp);
+      CG.Achievements.check({ type: 'level', level: l.key, chapter: c.id, stars: 3, chapterDone: C.chapterDone(c, p),
+        chapterAllStars: C.chapterStars(c, p) === c.levels.length * 3,
+        campaignDone: C.all.every((x) => p.done(x.key)), campaignAllStars: C.all.every((x) => p.stars(x.key) === 3) }, p);
+    }
+    rankAfter[c.id] = p.rank().name;
+  });
+  const want = { figuren: 'Knappe', regeln: 'Ritter', eroeffnung: 'Burgherr', endspiel1: 'Magier', bauern: 'Großmeister', meister: 'Großmeister' };
+  const bad = Object.entries(want).filter(([id, name]) => rankAfter[id] !== name);
+  if (bad.length) { errors++; console.log('✗ Rangkurve', rankAfter); } else console.log(`✓ Rangkurve (Kampagne komplett: ${p.state.xp} XP, ${p.rank().name})`);
 }
 console.log(errors ? `FEHLER: ${errors}` : 'OK');
 process.exit(errors ? 1 : 0);

@@ -429,7 +429,7 @@
     run.token++;
     const chapter = C.chapters[l.ci];
     const wasDone = C.chapterDone(chapter, progress);
-    const res = progress.levelResult(l.key, stars);
+    const res = progress.levelResult(l.key, stars, CG.progressUtil.XP.chapterFactor(l.ci));
     const chapterDone = !wasDone && C.chapterDone(chapter, progress);
     const chapterAllStars = C.chapterStars(chapter, progress) === chapter.levels.length * 3;
     const campaignDone = C.all.every((x) => progress.done(x.key));
