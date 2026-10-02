@@ -101,12 +101,15 @@
   // Toasts für Erfolge kommen gestaffelt, damit mehrere gleichzeitige nicht übereinanderliegen
   let achQueue = Promise.resolve();
   progress.on('achievement', (a) => {
+    achievementToast(a);
+  });
+  function achievementToast(a) {
     achQueue = achQueue.then(() => new Promise((r) => {
       CG.Audio.play('achievement');
       toast(esc(a.desc), { title: `Erfolg: ${a.name}`, icon: a.icon, cls: 'achievement', ms: 4200, badge: a.xp ? `+${a.xp} XP` : null });
       setTimeout(r, 900);
     }));
-  });
+  }
   let pendingRank = null;
   progress.on('rank', (r) => { pendingRank = r; });
   /** Rangaufstieg anzeigen, falls einer anliegt (nach Ergebnisdialogen aufrufen). */
@@ -114,14 +117,132 @@
     if (!pendingRank) return Promise.resolve();
     const r = pendingRank;
     pendingRank = null;
+    return rankUpDialog(r);
+  }
+  /** Feier für einen erreichten Rang (r wie progress.rank()); demo: ohne Erfolg „Rang erreicht“ (Effekt-Labor). */
+  function rankUpDialog(r, demo = false) {
     CG.Audio.play('levelup');
     return new Promise((resolve) => {
-      const d = modal(`<div class="rays"></div><p class="muted">Neuer Rang</p><div class="levelup-rank rank-badge">${r.icon}</div>
-        <div class="result-title">${esc(r.name)}</div><p>${r.next ? `Nächster Rang: ${esc(r.next.name)} bei ${r.next.xp} XP` : 'Du hast den höchsten Rang erreicht!'}</p>
-        <div class="buttons"><button class="btn btn-primary" data-close>Weiter</button></div>`, { cls: 'celebrate', onClose: resolve });
-      void d;
-      achieve({ type: 'rank', index: r.index });
+      const letters = [...r.name].map((c, i) => `<span style="--i:${i}">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('');
+      let stop = () => {};
+      const d = modal(`<div class="rays"></div><div class="rays rays-back"></div>
+        <p class="rankup-kicker">Neuer Rang!</p>
+        <div class="rankup-badge"><div class="levelup-rank rank-badge">${r.icon}</div></div>
+        <div class="result-title rankup-name">${letters}</div>
+        <p class="rankup-next">${r.next ? `Nächster Rang: ${esc(r.next.name)} bei ${r.next.xp} XP` : 'Du hast den höchsten Rang erreicht!'}</p>
+        <div class="buttons rankup-buttons"><button class="btn btn-primary" data-close>Weiter</button></div>`,
+      { cls: 'celebrate rankup', onClose: () => { stop(); resolve(); } });
+      const ov = d.el.parentElement;
+      ov.classList.add('rankup-overlay');
+      ov.prepend(h('<div class="rankup-flash"></div>'));
+      stop = fireworks(ov, 1 + r.index * 0.25, !r.next);
+      if (!demo) achieve({ type: 'rank', index: r.index });
     });
+  }
+
+  /**
+   * Feuerwerk auf einer Leinwand hinter dem Dialog: erst ein dichter Auftakt, dann ruhigere Raketen, solange
+   * der Dialog offen ist. intensity skaliert den Auftakt (höhere Ränge feiern länger), finale = höchster Rang.
+   * → Funktion zum Beenden.
+   */
+  function fireworks(host, intensity = 1, finale = false) {
+    if (G.matchMedia && G.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
+    const cv = h('<canvas class="fireworks" aria-hidden="true"></canvas>');
+    host.prepend(cv);
+    const cx = cv.getContext('2d');
+    let W = 0, H = 0, dpr = 1;
+    const size = () => {
+      dpr = Math.min(2, G.devicePixelRatio || 1);
+      W = host.clientWidth; H = host.clientHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    size();
+    G.addEventListener('resize', size);
+    const COLORS = [[45, 100, 62], [8, 95, 60], [130, 80, 55], [200, 95, 62], [280, 85, 68], [330, 90, 65], [50, 30, 92]];
+    const rockets = [], sparks = [];
+    let running = true, raf = 0, last = performance.now();
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const pick = (a) => a[Math.floor(Math.random() * a.length)];
+    const pan = (x) => (x / W - .5) * 1.2;
+
+    function launch(x = rand(.15, .85) * W) {
+      const ty = rand(.12, .45) * H;
+      const vy = Math.sqrt(2 * 520 * (H + 10 - ty));
+      rockets.push({ x, y: H + 10, vx: rand(-40, 40), vy: -vy, ty, col: pick(COLORS) });
+    }
+    function burst(x, y, col) {
+      const kind = pick(['peony', 'peony', 'ring', 'willow', 'double']);
+      const n = Math.round(rand(70, 120) * (W < 600 ? .7 : 1));
+      const speed = rand(170, 260) * Math.min(1.3, Math.max(.7, W / 1000));
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + rand(-.05, .05);
+        const v = kind === 'ring' ? speed : speed * Math.sqrt(Math.random());
+        const c = kind === 'double' && i % 2 ? pick(COLORS) : kind === 'willow' ? [42, 90, 60] : col;
+        sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, decay: kind === 'willow' ? rand(.28, .4) : rand(.5, .85),
+          drag: kind === 'willow' ? .965 : .985, col: c, glitter: kind === 'willow' || Math.random() < .25, px: x, py: y });
+      }
+      sparks.push({ x, y, vx: 0, vy: 0, life: 1, decay: 4, drag: 1, col: [50, 100, 95], flash: speed * .45 });
+      CG.Audio.play('firework', pan(x));
+    }
+
+    // Auftakt: eine Salve gleichzeitig, dann dichte Folge; danach ruhig weiter
+    const timers = [];
+    const later = (ms, fn) => timers.push(setTimeout(() => running && fn(), ms));
+    [.25, .5, .75].forEach((f, i) => later(150 + i * 120, () => launch(f * W)));
+    const opening = Math.round(6 * intensity) + (finale ? 10 : 0);
+    for (let i = 0; i < opening; i++) later(700 + i * rand(220, 380), () => launch());
+    if (finale) later(700 + opening * 300, () => { for (let i = 0; i < 7; i++) setTimeout(() => running && launch(((i + .5) / 7) * W), i * 70); });
+    const idle = setInterval(() => running && Math.random() < .8 && launch(), 1400);
+
+    function frame(now) {
+      if (!running || !cv.isConnected) return;
+      const dt = Math.min(.05, (now - last) / 1000);
+      last = now;
+      // Spuren ausblenden statt hart löschen
+      cx.globalCompositeOperation = 'destination-out';
+      cx.fillStyle = 'rgba(0,0,0,.28)';
+      cx.fillRect(0, 0, W, H);
+      cx.globalCompositeOperation = 'lighter';
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const k = rockets[i];
+        k.vy += 520 * dt;
+        k.x += k.vx * dt; k.y += k.vy * dt;
+        cx.fillStyle = 'hsla(40, 100%, 75%, .9)';
+        cx.beginPath(); cx.arc(k.x, k.y, 2.2, 0, Math.PI * 2); cx.fill();
+        if (Math.random() < .8) sparks.push({ x: k.x, y: k.y, vx: rand(-20, 20), vy: rand(20, 60), life: .6, decay: 2.2, drag: .95, col: [38, 100, 65], px: k.x, py: k.y });
+        if (k.vy >= -30 || k.y <= k.ty) { rockets.splice(i, 1); burst(k.x, k.y, k.col); }
+      }
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const p = sparks[i];
+        p.life -= p.decay * dt;
+        if (p.life <= 0) { sparks.splice(i, 1); continue; }
+        if (p.flash) {
+          const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.flash);
+          g.addColorStop(0, `rgba(255,245,210,${.5 * p.life})`); g.addColorStop(1, 'rgba(255,245,210,0)');
+          cx.fillStyle = g; cx.fillRect(p.x - p.flash, p.y - p.flash, p.flash * 2, p.flash * 2);
+          continue;
+        }
+        p.px = p.x; p.py = p.y;
+        p.vx *= p.drag; p.vy = p.vy * p.drag + 90 * dt;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        const a = p.glitter ? p.life * (Math.random() < .5 ? 1 : .25) : p.life;
+        const [hh, ss, ll] = p.col;
+        cx.strokeStyle = `hsla(${hh}, ${ss}%, ${ll}%, ${a})`;
+        cx.lineWidth = 2;
+        cx.beginPath(); cx.moveTo(p.px, p.py); cx.lineTo(p.x, p.y); cx.stroke();
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      timers.forEach(clearTimeout);
+      clearInterval(idle);
+      G.removeEventListener('resize', size);
+      cv.remove();
+    };
   }
   /** Ereignis an die Erfolge melden. */
   function achieve(event) { return CG.Achievements.check(event, progress); }
@@ -222,7 +343,7 @@
 
   CG.UI = {
     store, $, $$, esc, h, settings, setSetting, PIECE_SETS, BOARD_THEMES, show, get screen() { return current; },
-    modal, ask, toast, progress, achieve, touchDay, showRankUp, rankHTML, syncAudioButtons, sleep, copy,
+    modal, ask, toast, achievementToast, progress, achieve, touchDay, showRankUp, rankUpDialog, rankHTML, syncAudioButtons, sleep, copy,
     get modalOpen() { return stack.length > 0; },
   };
 })(globalThis);

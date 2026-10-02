@@ -55,9 +55,14 @@ Bedienung: Ziehen & Ablegen oder Tippen–Tippen. Tastatur: `←`/`→` blätter
 | `js/training/puzzles.js` | ~500 Rätsel aus der Lichess-Datenbank, erzeugt mit `tools/build-puzzles.js` |
 | `js/training/runner.js` | Trainingslogik: Aufgaben prüfen, Sterne, Endspielziele |
 | `js/audio.js` | Klänge und Musik, live mit Web Audio erzeugt (aus dem Kartenspiel Eldoria, mit Schachklängen) |
-| `js/ui/*.js` | Oberfläche: `common` (Dialoge, Toasts, Einstellungen), `play` (Spielansicht), `pvc`, `lobby`, `training`, `menu` |
+| `js/ui/*.js` | Oberfläche: `common` (Dialoge, Toasts, Einstellungen), `play` (Spielansicht), `pvc`, `lobby`, `training`, `menu`, `debug` (Effekt-Labor) |
 | `art/pieces/` | Figurensätze Tatiana (Standard), Governor, Keltisch, Klassisch (`LIZENZ.md`) |
 | `tools/` | `build-vendor.sh` (chess.js + Stockfish aus npm), `build-puzzles.js`, `make-icons.py`, `emoji-font.py`, `bump.sh` |
+
+## Effekt-Labor
+
+Mit `#debug` in der Adresse (z. B. `http://localhost:8000/#debug`) öffnet sich in der normalen App ein Dialog, der
+Rangaufstieg, Erfolge, Level- und Partie-Ergebnisse, Toasts und alle Töne auslöst – ohne den Spielstand zu verändern.
 
 ## Tests
 

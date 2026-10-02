@@ -443,6 +443,13 @@
       chord([66, 69, 74], t + 0.82, 1.6);
       tone({ t: t + 0.82, freq: 73, to: 36, dur: 1, peak: 0.5 });
     },
+    // ---- Feuerwerk: Knall mit Nachknistern
+    firework(pan = 0) {
+      const t = ctx.currentTime;
+      noise({ t, f0: 260, f1: 60, type: 'lowpass', q: 0.8, attack: 0.002, dur: 0.6, peak: 0.45, pan });
+      tone({ t, freq: 70, to: 32, dur: 0.5, peak: 0.25, pan });
+      for (let i = 0; i < 14; i++) noise({ t: t + 0.18 + Math.random() * 0.9, f0: 3000 + Math.random() * 4000, type: 'highpass', attack: 0.001, dur: 0.02, peak: 0.05 + Math.random() * 0.05, pan });
+    },
     defeat() {
       const t = ctx.currentTime;
       [50, 53, 57].forEach((n) => tone({ t, freq: NOTE(n), type: 'sawtooth', attack: 0.4, dur: 2.4, peak: 0.06, curve: 'lin', filter: { freq: 800, to: 250, time: 2.4 } }));
@@ -450,9 +457,9 @@
     },
   };
 
-  function play(name) {
+  function play(name, ...args) {
     if (!settings.sfx || !ctx || ctx.state !== 'running' || !SOUNDS[name]) return;
-    try { SOUNDS[name](); } catch (e) { /* Ton ist nie spielentscheidend */ }
+    try { SOUNDS[name](...args); } catch (e) { /* Ton ist nie spielentscheidend */ }
   }
 
   /* ------------------------------------------------------------ Hintergrundmusik */

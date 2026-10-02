@@ -245,6 +245,7 @@
     d.el.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', () => {
       const v = b.dataset.v;
       d.close();
+      if (s.demo) return; // Effekt-Labor: nur ansehen
       if (v === 'again') startPvC({ elo: s.elo, color: other(s.me), tc: s.tc, assists: s.assists });
       else if (v === 'analyse') analyse();
       else if (v === 'menu') { session = null; CG.Menu.open(); }
@@ -375,5 +376,5 @@
     startPvC({ elo: sv.elo, color: sv.color, tc: sv.tc, assists: sv.assists, saved: sv });
   }
 
-  CG.PvC = { setupDialog, start: startPvC, resume, savedGame, startLocal, analyse, view: V };
+  CG.PvC = { setupDialog, start: startPvC, resume, savedGame, startLocal, analyse, view: V, resultDialog };
 })(globalThis);

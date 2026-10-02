@@ -12,7 +12,7 @@ const CACHE = `gambit-${VERSION}`;
 const v = (f) => `${f}?v=${VERSION}`;
 
 const SCRIPTS = ['vendor/chess', 'game', 'engine', 'strength', 'board', 'audio', 'net', 'pvp', 'progress', 'achievements',
-  'training/puzzles', 'training/campaign', 'training/runner', 'ui/common', 'ui/play', 'ui/pvc', 'ui/lobby', 'ui/training', 'ui/menu',
+  'training/puzzles', 'training/campaign', 'training/runner', 'ui/common', 'ui/play', 'ui/pvc', 'ui/lobby', 'ui/training', 'ui/menu', 'ui/debug',
   'vendor/trystero', 'vendor/qrcode', 'vendor/stockfish/stockfish'];
 const PIECES = ['tatiana', 'governor', 'celtic', 'cburnett'].flatMap((set) => ['w', 'b'].flatMap((c) => ['K', 'Q', 'R', 'B', 'N', 'P'].map((p) => `art/pieces/${set}/${c}${p}.svg`)));
 

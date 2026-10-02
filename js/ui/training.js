@@ -437,16 +437,7 @@
     progress.addXp(res.xp, `Level ${l.title}`);
     achieve({ type: 'level', level: l.key, chapter: chapter.id, stars, chapterDone: C.chapterDone(chapter, progress), chapterAllStars, campaignDone, campaignAllStars });
     const next = C.all[C.all.indexOf(l) + 1];
-    const d = modal(`<div class="rays"></div><p class="muted">${esc(l.title)}</p><div class="result-title">${stars === 3 ? 'Meisterhaft!' : stars === 2 ? 'Gut gemacht!' : 'Geschafft!'}</div>
-      <div class="stars-big"><span>⭐</span><span>⭐</span><span>⭐</span></div>
-      ${res.xp ? `<div class="xp-gain">+${res.xp} XP</div>` : `<p class="muted">${progress.stars(l.key) > stars ? `Dein Bestwert bleibt ${starStr(progress.stars(l.key))}` : 'Keine neuen Sterne'}</p>`}
-      ${chapterDone ? `<p><b>🎉 Kapitel „${esc(chapter.title)}“ gemeistert!</b></p>` : ''}
-      ${!next && campaignDone ? '<p><b>🐉 Du hast die ganze Kampagne geschafft!</b></p>' : ''}
-      <div class="buttons">${next ? '<button class="btn btn-primary" data-v="next">Weiter →</button>' : ''}
-        <button class="btn btn-secondary" data-v="again">↺ Nochmal</button><button class="btn btn-secondary" data-v="map">🗺️ Karte</button></div>`,
-    { cls: 'celebrate', dismiss: false, onClose: () => CG.UI.showRankUp() });
-    const spans = d.el.querySelectorAll('.stars-big span');
-    spans.forEach((s, i) => { if (i < stars) setTimeout(() => { s.classList.add('on'); CG.Audio.play('star'); }, 300 + i * 320); });
+    const d = finishDialog(l, stars, res.xp, { chapterDone, campaignDone, next });
     d.el.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', () => {
       d.close();
       const v = b.dataset.v;
@@ -454,6 +445,22 @@
       else if (v === 'again') start(l);
       else backToMap();
     }));
+  }
+
+  /** Ergebnisdialog eines geschafften Levels (Knöpfe data-v = next/again/map verdrahtet der Aufrufer). */
+  function finishDialog(l, stars, xp, { chapterDone = false, campaignDone = false, next = null } = {}) {
+    const chapter = C.chapters[l.ci];
+    const d = modal(`<div class="rays"></div><p class="muted">${esc(l.title)}</p><div class="result-title">${stars === 3 ? 'Meisterhaft!' : stars === 2 ? 'Gut gemacht!' : 'Geschafft!'}</div>
+      <div class="stars-big"><span>⭐</span><span>⭐</span><span>⭐</span></div>
+      ${xp ? `<div class="xp-gain">+${xp} XP</div>` : `<p class="muted">${progress.stars(l.key) > stars ? `Dein Bestwert bleibt ${starStr(progress.stars(l.key))}` : 'Keine neuen Sterne'}</p>`}
+      ${chapterDone ? `<p><b>🎉 Kapitel „${esc(chapter.title)}“ gemeistert!</b></p>` : ''}
+      ${!next && campaignDone ? '<p><b>🐉 Du hast die ganze Kampagne geschafft!</b></p>' : ''}
+      <div class="buttons">${next ? '<button class="btn btn-primary" data-v="next">Weiter →</button>' : ''}
+        <button class="btn btn-secondary" data-v="again">↺ Nochmal</button><button class="btn btn-secondary" data-v="map">🗺️ Karte</button></div>`,
+    { cls: 'celebrate', dismiss: false, onClose: () => CG.UI.showRankUp() });
+    const spans = d.el.querySelectorAll('.stars-big span');
+    spans.forEach((s, i) => { if (i < stars) setTimeout(() => { s.classList.add('on'); CG.Audio.play('star'); }, 300 + i * 320); });
+    return d;
   }
 
   function failed(l, why) {
@@ -470,5 +477,5 @@
     }));
   }
 
-  CG.Training = { open, start, intro };
+  CG.Training = { open, start, intro, finishDialog };
 })(globalThis);
