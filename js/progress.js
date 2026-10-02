@@ -17,7 +17,7 @@
     { xp: 2500, name: 'Burgherr', icon: '🏰' },
     { xp: 4500, name: 'Magier', icon: '🔮' },
     { xp: 7000, name: 'Großmeister', icon: '👑' },
-    { xp: 12000, name: 'Drachenkönig', icon: '🐉' },
+    { xp: 15000, name: 'Drachenkönig', icon: '🐉' },
   ];
 
   const XP = {
