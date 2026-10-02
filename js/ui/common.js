@@ -185,6 +185,27 @@
   document.addEventListener('pointerdown', unlock, { capture: true });
   document.addEventListener('keydown', unlock, { capture: true });
 
+  /*
+   * Höhe der App vom Homescreen (iOS): Die Statusleiste liegt durchsichtig über dem Inhalt, die Seite darf also
+   * den ganzen Bildschirm füllen. Gemeldet wird das aber unterschiedlich falsch – auf dem iPhone sind 100 %/dvh
+   * um die Statusleiste zu kurz, auf dem iPad ist 100lvh zu lang (die untere Leiste wurde abgeschnitten).
+   * Deshalb hier die Bildschirmhöhe in der aktuellen Ausrichtung; in Split View/Stage Manager (Fenster schmaler
+   * als der Bildschirm) die echte Fensterhöhe.
+   */
+  function fitStandaloneHeight() {
+    if (!navigator.standalone) return;
+    const landscape = G.matchMedia('(orientation: landscape)').matches;
+    const sw = landscape ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    const sh = landscape ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+    const h = Math.abs(G.innerWidth - sw) > 2 ? G.innerHeight : sh;
+    const root = document.documentElement;
+    root.style.setProperty('--vh', `${h}px`);
+    root.style.height = document.body.style.height = `${h}px`;
+  }
+  fitStandaloneHeight();
+  G.addEventListener('resize', fitStandaloneHeight);
+  G.addEventListener('orientationchange', () => setTimeout(fitStandaloneHeight, 300));
+
   // Kein Zoom per Geste (iOS ignoriert user-scalable=no)
   document.addEventListener('gesturestart', (e) => e.preventDefault());
   document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
