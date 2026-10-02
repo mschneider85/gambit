@@ -286,7 +286,12 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .sq::before, .sq::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
 .sq.last::before { background: var(--last); }
 .sq.selected::before { background: var(--sel); }
-.sq.hint::before { background: rgba(110, 224, 122, .45); animation: hint-pulse 1.2s ease-in-out infinite alternate; }
+.sq.hint::before {
+  /* Goldener Ring statt Grün – auf jedem Brett (auch dem grünen) gut sichtbar */
+  background: radial-gradient(circle, rgba(255, 214, 90, .45) 0 45%, transparent 70%);
+  box-shadow: inset 0 0 0 calc(var(--bw) * .007) #ffcc33, inset 0 0 calc(var(--bw) * .03) rgba(255, 190, 40, .9);
+  animation: hint-pulse .8s ease-in-out infinite alternate;
+}
 .sq.good::before { background: rgba(110, 224, 122, .55); }
 .sq.bad::before { background: rgba(255, 90, 70, .55); }
 .sq.target::before { box-shadow: inset 0 0 0 calc(var(--bw) * .006) rgba(110, 224, 122, .9); background: rgba(110, 224, 122, .18); }
@@ -360,6 +365,7 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .coach .feedback { font-weight: 700; }
 .coach .feedback.ok { color: #2b7a2b; }
 .coach .feedback.no { color: #b0301e; }
+.coach .feedback.hint { color: #7a5010; }
 .coach .coach-foot { display: flex; align-items: center; gap: 4px 12px; margin-top: 8px; min-height: 20px; flex-wrap: wrap; }
 .coach .coach-foot .feedback { margin: 0; }
 .coach .progress-dots { display: flex; gap: 5px; flex-wrap: wrap; }

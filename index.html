@@ -21,7 +21,7 @@
   <!-- Alle Schriften liegen im Projekt (@font-face in style.css), es wird nichts von fremden Servern geladen -->
   <link rel="preload" href="art/fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="art/fonts/alegreya-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=36">
+  <link rel="stylesheet" href="css/style.css?v=37">
   <!-- Inhalt erst zeigen, wenn Cinzel/Alegreya geladen sind (kein kurzes Aufblitzen der Ersatzschrift) -->
   <style>html.fonts-loading body > * { visibility: hidden; }</style>
   <script>
@@ -134,32 +134,32 @@
   <div id="overlays"></div>
   <div id="toasts" aria-live="polite"></div>
 
-  <script src="js/vendor/chess.js?v=36"></script>
-  <script src="js/game.js?v=36"></script>
-  <script src="js/engine.js?v=36"></script>
-  <script src="js/strength.js?v=36"></script>
-  <script src="js/board.js?v=36"></script>
-  <script src="js/audio.js?v=36"></script>
-  <script src="js/net.js?v=36"></script>
-  <script src="js/pvp.js?v=36"></script>
-  <script src="js/progress.js?v=36"></script>
-  <script src="js/achievements.js?v=36"></script>
-  <script src="js/training/puzzles.js?v=36"></script>
-  <script src="js/training/campaign.js?v=36"></script>
-  <script src="js/training/runner.js?v=36"></script>
-  <script src="js/ui/common.js?v=36"></script>
-  <script src="js/ui/play.js?v=36"></script>
-  <script src="js/ui/pvc.js?v=36"></script>
-  <script src="js/ui/lobby.js?v=36"></script>
-  <script src="js/ui/training.js?v=36"></script>
-  <script src="js/ui/menu.js?v=36"></script>
+  <script src="js/vendor/chess.js?v=37"></script>
+  <script src="js/game.js?v=37"></script>
+  <script src="js/engine.js?v=37"></script>
+  <script src="js/strength.js?v=37"></script>
+  <script src="js/board.js?v=37"></script>
+  <script src="js/audio.js?v=37"></script>
+  <script src="js/net.js?v=37"></script>
+  <script src="js/pvp.js?v=37"></script>
+  <script src="js/progress.js?v=37"></script>
+  <script src="js/achievements.js?v=37"></script>
+  <script src="js/training/puzzles.js?v=37"></script>
+  <script src="js/training/campaign.js?v=37"></script>
+  <script src="js/training/runner.js?v=37"></script>
+  <script src="js/ui/common.js?v=37"></script>
+  <script src="js/ui/play.js?v=37"></script>
+  <script src="js/ui/pvc.js?v=37"></script>
+  <script src="js/ui/lobby.js?v=37"></script>
+  <script src="js/ui/training.js?v=37"></script>
+  <script src="js/ui/menu.js?v=37"></script>
   <script>
     // Service Worker: offline spielen und schneller Start. Auf localhost nur mit ?sw (sonst stören alte Dateien beim Entwickeln)
     (function () {
       if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
       var local = /^(localhost|127\.|\[::1\])/.test(location.hostname);
       if (local && !/[?&]sw\b/.test(location.search)) return;
-      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js?v=36').catch(function () {}); });
+      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js?v=37').catch(function () {}); });
     })();
   </script>
 </body>

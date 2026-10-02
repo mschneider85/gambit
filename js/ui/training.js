@@ -268,13 +268,25 @@
     r.hintStage = 0;
   }
 
-  function stepHint(r) {
+  /** Tipp: erst die richtige Figur markieren, beim zweiten Mal den ganzen Zug als Pfeil zeigen. */
+  function stepHint(r, tries = 0) {
+    if (run !== r) return;
+    // Läuft gerade noch der Zug des Gegners, kurz warten statt den Tipp zu verschlucken
+    if (r.busy) { if (tries < 30) setTimeout(() => stepHint(r, tries + 1), 100); return; }
     const exp = r.ex.expected;
-    if (!exp || r.busy) return;
+    if (!exp || r.hintStage >= 2) return;
     r.hints++;
     const m = CG.chessUtil.parseUci(exp);
-    if (r.hintStage === 0) { V().board.setMarks({ hint: [m.from] }); r.hintStage = 1; }
-    else { V().board.setArrows([{ from: m.from, to: m.to, color: 'green' }]); r.hintStage = 2; }
+    if (r.hintStage === 0) {
+      V().board.setMarks({ hint: [m.from] });
+      r.hintStage = 1;
+      V().setCoach(stepsCoach(r, { cls: 'hint', text: '💡 Diese Figur zieht. Noch einmal Tipp zeigt den Zug.' }));
+    } else {
+      V().board.setArrows([{ from: m.from, to: m.to, color: 'green' }]);
+      r.hintStage = 2;
+      V().setCoach(stepsCoach(r, { cls: 'hint', text: '💡 Der Pfeil zeigt den Zug.' }));
+    }
+    CG.Audio.play('select');
   }
 
   /* ------------------------------------------------------------ Endspiel */
